@@ -274,7 +274,7 @@ public final class SimulationDisplay extends JPanel implements SimulationObserve
 
     private void drawDashboard(Graphics2D graphics, List<Vehicle> vehicles) {
         graphics.setColor(new Color(12, 18, 23, 215));
-        graphics.fillRoundRect(18, 16, 324, 92, 14, 14);
+        graphics.fillRoundRect(18, 16, 360, 115, 14, 14);
         graphics.setColor(Color.WHITE);
         graphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
         graphics.drawString("CITY FLOW", 32, 40);
