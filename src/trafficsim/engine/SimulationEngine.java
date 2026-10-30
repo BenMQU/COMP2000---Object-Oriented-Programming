@@ -7,11 +7,13 @@ import trafficsim.model.road.Road;
 import trafficsim.model.road.RoadNetwork;
 import trafficsim.model.vehicle.Vehicle;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
+import java.util.stream.Collectors;
 
 /**
  * Advances traffic in fixed ticks and notifies the display after each complete update.
@@ -67,10 +69,15 @@ public class SimulationEngine {
     }
 
     private Map<Vehicle, SensorReading> readSensors(List<Vehicle> vehicles) {
+        // Sensor reads are pure and independent. Compute in parallel for larger traffic
+        // populations, then assemble in original encounter order to preserve move order.
+        var stream = vehicles.size() >= 32 ? vehicles.parallelStream() : vehicles.stream();
+        var snapshots = stream
+                .map(vehicle -> new AbstractMap.SimpleImmutableEntry<>(
+                        vehicle, TrafficSensor.read(vehicle, network)))
+                .collect(Collectors.toList());
         Map<Vehicle, SensorReading> readings = new LinkedHashMap<>();
-        for (Vehicle vehicle : vehicles) {
-            readings.put(vehicle, TrafficSensor.read(vehicle, network));
-        }
+        snapshots.forEach(entry -> readings.put(entry.getKey(), entry.getValue()));
         return readings;
     }
 
@@ -81,11 +88,10 @@ public class SimulationEngine {
     }
 
     private List<Vehicle> collectVehicles() {
-        List<Vehicle> all = new ArrayList<>();
-        for (Road road : network.getRoads())
-            for (Lane lane : road.getLanes())
-                all.addAll(lane.getVehicles());
-        return all;
+        return network.getRoads().stream()
+            .flatMap(road -> road.getLanes().stream())
+            .flatMap(lane -> lane.getVehicles().stream())
+            .collect(Collectors.toList());
     }
 
     // -- lifecycle -----------------------------------------------------------
