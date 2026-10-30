@@ -29,6 +29,7 @@ import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -262,6 +263,15 @@ public final class SimulationDisplay extends JPanel implements SimulationObserve
         return colour;
     }
 
+    private static long vehicleCount(
+        Map<String, DoubleSummaryStatistics> byType,
+        String type) {
+
+    DoubleSummaryStatistics stats = byType.get(type);
+
+    return stats == null ? 0 : stats.getCount();
+    }
+
     private void drawDashboard(Graphics2D graphics, List<Vehicle> vehicles) {
         graphics.setColor(new Color(12, 18, 23, 215));
         graphics.fillRoundRect(18, 16, 324, 92, 14, 14);
@@ -276,7 +286,10 @@ public final class SimulationDisplay extends JPanel implements SimulationObserve
                 Statistics.averageSpeed(vehicles), Statistics.stoppedCount(vehicles)), 32, 76);
         graphics.drawString(String.format("run seed %016X",
                 engine.getRunSeed()), 32, 94);
-
+        var byType = Statistics.speedByVehicleType(vehicles);
+        graphics.drawString(String.format("cars %d  trucks %d  buses %d  emergency %d",
+                vehicleCount(byType, "Car"), vehicleCount(byType, "Truck"),
+                vehicleCount(byType, "Bus"), vehicleCount(byType, "EmergencyVehicle")), 32, 113);
         graphics.setColor(new Color(12, 18, 23, 185));
         graphics.fillRoundRect(18, getHeight() - 45, 170, 28, 12, 12);
         graphics.setColor(new Color(225, 232, 235));

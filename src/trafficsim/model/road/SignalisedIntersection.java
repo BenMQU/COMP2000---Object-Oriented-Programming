@@ -57,18 +57,14 @@ public final class SignalisedIntersection extends Intersection {
     /** Count vehicles queued on connected roads whose direction matches the green axis. */
     private int queuedOnGreenAxis() {
         Axis green = light.getGreenAxis();
-        int count = 0;
-        for (Road road : connectedRoads) {
-            for (Lane lane : road.getLanes()) {
-                if (Axis.of(lane.getDirection()) != green) continue;
-                for (Vehicle v : lane.getVehicles()) {
-                    if (v.getSpeed() > 0.5) continue;
-                    // Count only stopped vehicles close enough to be waiting for this junction.
-                    double dx = v.getX() - x, dy = v.getY() - y;
-                    if (Math.hypot(dx, dy) < 180) count++; // scaled for enlarged map
-                }
-            }
-        }
-        return count;
+        return (int) connectedRoads.stream()
+        .flatMap(road -> road.getLanes().stream())
+        .filter(lane -> Axis.of(lane.getDirection()) == green)
+        .flatMap(lane -> lane.getVehicles().stream())
+        .filter(vehicle -> vehicle.getSpeed() <= 0.5)
+        .filter(vehicle -> Math.hypot(
+                vehicle.getX() - x,
+                vehicle.getY() - y) < 180)
+        .count();
     }
 }
